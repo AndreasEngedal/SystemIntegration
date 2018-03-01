@@ -1,17 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 using System.Messaging;
 using System.Threading;
 using System.ComponentModel;
@@ -43,9 +31,14 @@ namespace IOTAMessagingTracker
 
         private void ReceiveMessages(object sender, DoWorkEventArgs e)
         {
-            MessageQueue msMq = msMq = new MessageQueue(MessageConstants.ObjectMessageQueue);
+			MessageQueue msMq = null;
 
-            while (true)
+			if (!MessageQueue.Exists(MessageConstants.ObjectMessageQueue))
+				msMq = MessageQueue.Create(MessageConstants.ObjectMessageQueue);
+			else
+				msMq = new MessageQueue(MessageConstants.ObjectMessageQueue);
+
+			while (true)
             {
                 try
                 {
@@ -54,7 +47,6 @@ namespace IOTAMessagingTracker
 
                     RateObject rate = (RateObject)msMq.Receive().Body;
                     worker.ReportProgress(0, rate);
-
                 }
                 catch (MessageQueueException ee)
                 {

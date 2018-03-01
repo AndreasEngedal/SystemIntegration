@@ -1,13 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Xml.Serialization;
 
-namespace ClassLibrary
+namespace MessageTranslator
 {
-    public class RateObject
+	[XmlRoot("RawRateObject")]
+    public class RawRateObject
     {
         [XmlElement("id")]
         public string Id { get; set; }
@@ -31,16 +27,16 @@ namespace ClassLibrary
         public string VolumeUSD24h { get; set; }
 
         [XmlElement("market_cap_usd")]
-        public int MarketCapUSD { get; set; }
+        public double MarketCapUSD { get; set; }
 
         [XmlElement("available_supply")]
-        public int AvailableSupply { get; set; }
+        public double AvailableSupply { get; set; }
 
         [XmlElement("total_supply")]
-        public int TotalSupply { get; set; }
+        public double TotalSupply { get; set; }
 
         [XmlElement("max_supply")]
-        public int MaxSupply { get; set; }
+        public double MaxSupply { get; set; }
 
         [XmlElement("percent_change_1h")]
         public double PercentChange1h { get; set; }

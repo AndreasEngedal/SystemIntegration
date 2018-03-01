@@ -1,15 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net.Http;
-using System.Net.Http.Headers;
-using System.Text;
-using System.Threading.Tasks;
+using System;
 using ClassLibrary;
 using RestSharp;
-using Newtonsoft.Json;
 using System.Xml;
 using System.Messaging;
+using Newtonsoft.Json.Linq;
+using System.Xml.Serialization;
+using System.IO;
 
 namespace RateReceiverConsole
 {
@@ -19,6 +15,7 @@ namespace RateReceiverConsole
 
         static void Main(string[] args)
         {
+			Console.Title = "RateReceiverConsole";
             RestClient client = new RestClient("https://api.coinmarketcap.com/v1/ticker");
             while (true)
             {
@@ -27,23 +24,43 @@ namespace RateReceiverConsole
                 request.AddParameter("coinType", coinType, ParameterType.UrlSegment);
                 request.OnBeforeDeserialization = resp => { resp.ContentType = "application/json"; };
 
+				client.ExecuteAsync(request, response => {
+					JArray a = JArray.Parse(response.Content);
+					RawRateObject obj = a[0].ToObject<RawRateObject>();
+					XmlDocument xml = SerializeToXmlDocument(obj);
+					SendXmlMessage(xml);
+				});
 
-                client.ExecuteAsync(request, response => {
-                    string xmlObj = "RateObject";
-                    XmlDocument doc = (XmlDocument)JsonConvert.DeserializeXmlNode("{\"" + xmlObj + "\":" + response.Content + "}", "root");
-                    
-                    SendXmlMessage(doc);
-                    doc.PreserveWhitespace = true;
-                    doc.Save("test.xml");
-                });
-
-                System.Threading.Thread.Sleep(1000);
+				System.Threading.Thread.Sleep(5000);
             }
-
-            Console.ReadLine();
         }
 
-        private static void SendXmlMessage(XmlDocument doc)
+		public static XmlDocument SerializeToXmlDocument(object input)
+		{
+			XmlSerializer ser = new XmlSerializer(input.GetType());
+
+			XmlDocument xd = null;
+
+			using (MemoryStream memStm = new MemoryStream())
+			{
+				ser.Serialize(memStm, input);
+
+				memStm.Position = 0;
+
+				XmlReaderSettings settings = new XmlReaderSettings();
+				settings.IgnoreWhitespace = true;
+
+				using (var xtr = XmlReader.Create(memStm, settings))
+				{
+					xd = new XmlDocument();
+					xd.Load(xtr);
+				}
+			}
+			xd.Save("test.xml");
+			return xd;
+		}
+
+		private static void SendXmlMessage(XmlDocument doc)
         {
             MessageQueue msMq = null;
 
@@ -70,7 +87,6 @@ namespace RateReceiverConsole
             }
 
             Console.WriteLine("Message sent!");
-            Console.ReadKey();
         }
     }
 }
